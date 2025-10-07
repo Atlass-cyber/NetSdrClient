@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NetSdrClient.Networking 
+namespace NetSdrClientApp.Networking 
 {
     public class UdpClientWrapper : IUdpClient, IDisposable
     {
