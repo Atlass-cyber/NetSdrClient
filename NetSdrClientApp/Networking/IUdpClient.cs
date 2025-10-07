@@ -1,4 +1,4 @@
-﻿namespace NetSdrClient.Networking 
+namespace NetSdrClient.Networking 
 {
     public interface IUdpClient
     {
