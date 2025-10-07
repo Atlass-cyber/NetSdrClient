@@ -74,6 +74,20 @@ namespace NetSdrClient.Networking
                 Console.WriteLine($"Error while stopping: {ex.Message}");
             }
         }
+
+        public void Exit()
+        {
+            StopListening();
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is not UdpClientWrapper other)
+                return false;
+
+            return _localEndPoint.Address.Equals(other._localEndPoint.Address)
+                   && _localEndPoint.Port == other._localEndPoint.Port;
+        }
     
         public override int GetHashCode()
         {
@@ -83,6 +97,13 @@ namespace NetSdrClient.Networking
             var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(payload));
     
             return BitConverter.ToInt32(hash, 0);
+        }
+        public void Dispose()
+        {
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _udpClient?.Close();
+            _udpClient?.Dispose();
         }
     }
 }
