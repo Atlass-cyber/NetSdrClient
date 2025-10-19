@@ -116,4 +116,69 @@ public class NetSdrClientTests
     }
 
     //TODO: cover the rest of the NetSdrClient code here
+
+    // --- ТЕСТ №1 (адаптований під NUnit): Перевіряємо, що Disconnect викликається навіть якщо не було підключення ---
+    [Test]
+    public void Disconnect_ShouldAlwaysCallDisconnectOnTcpClient()
+    {
+        // Arrange - нічого не потрібно, все є в Setup
+
+        // Act
+        _client.Disconect();
+
+        // Assert
+        // Просто перевіряємо, що метод Disconnect нашого фальшивого клієнта був викликаний 1 раз
+        _tcpMock.Verify(c => c.Disconnect(), Times.Once());
+    }
+
+    // --- ТЕСТ №2 (адаптований під NUnit): Перевіряємо, що StopIQAsync не працює, якщо немає підключення ---
+    [Test]
+    public async Task StopIQAsync_ShouldDoNothing_WhenNotConnected()
+    {
+        // Arrange
+        // Кажемо, що клієнт НЕ підключений
+        _tcpMock.Setup(c => c.Connected).Returns(false);
+        _client.IQStarted = true; // Імітуємо, що IQ було запущено
+
+        // Act
+        await _client.StopIQAsync();
+
+        // Assert
+        Assert.That(_client.IQStarted, Is.True, "Статус IQ не повинен був змінитись, бо немає підключення.");
+        _tcpMock.Verify(c => c.SendMessageAsync(It.IsAny<byte[]>()), Times.Never());
+    }
+
+    // --- ТЕСТ №3 (адаптований під NUnit): Перевіряємо, що ChangeFrequencyAsync відправляє повідомлення ---
+    [Test]
+    public async Task ChangeFrequencyAsync_ShouldSendMessage_WhenCalled()
+    {
+        // Arrange
+        // Кажемо, що клієнт підключений, щоб метод відпрацював
+        _tcpMock.Setup(c => c.Connected).Returns(true);
+
+        // Act
+        await _client.ChangeFrequencyAsync(1000000, 1);
+
+        // Assert
+        _tcpMock.Verify(c => c.SendMessageAsync(It.IsAny<byte[]>()), Times.Once(), "Метод для відправки повідомлення не був викликаний.");
+    }
+
+    // --- ТЕСТ №4 (адаптований під NUnit): Перевіряємо, що ConnectAsync нічого не робить, якщо вже є підключення ---
+    [Test]
+    public async Task ConnectAsync_ShouldDoNothing_WhenAlreadyConnected()
+    {
+        // Arrange
+        // Кажемо, що клієнт ВЖЕ підключений
+        _tcpMock.Setup(c => c.Connected).Returns(true);
+        // Скидаємо лічильники викликів, які могли спрацювати в Setup
+        _tcpMock.ResetCalls(); 
+
+        // Act
+        await _client.ConnectAsync();
+
+        // Assert
+        // Перевіряємо, що метод Connect НЕ був викликаний знову
+        _tcpMock.Verify(c => c.Connect(), Times.Never(), "Метод Connect не повинен викликатись, якщо вже є підключення.");
+        _tcpMock.Verify(c => c.SendMessageAsync(It.IsAny<byte[]>()), Times.Never());
+    }
 }
