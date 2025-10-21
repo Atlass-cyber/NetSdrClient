@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using NUnit.Framework; // <-- Вот замена
+using NUnit.Framework;
 using NetSdrClientApp.Networking; 
 
 namespace NetSdrClientApp.Tests
@@ -24,7 +24,7 @@ namespace NetSdrClientApp.Tests
             {
                 try
                 {
-                   
+                    
                     using var client = await listener.AcceptTcpClientAsync();
                     using var stream = client.GetStream();
                     
@@ -40,7 +40,7 @@ namespace NetSdrClientApp.Tests
                 }
                 finally
                 {
-                    listener.Stop(); /
+                    listener.Stop();
                 }
             });
 
@@ -48,7 +48,7 @@ namespace NetSdrClientApp.Tests
             var wrapper = new TcpClientWrapper("127.0.0.1", port);
             
             string testMessage = "hello_sonar";
-                        
+                            
             wrapper.Connect(); 
             
             await wrapper.SendMessageAsync(testMessage);
@@ -60,7 +60,7 @@ namespace NetSdrClientApp.Tests
             
             
             Assert.AreEqual(testMessage, messageReceivedByServer); 
-                        
+                            
             Assert.False(wrapper.Connected);
         }
 
@@ -69,7 +69,7 @@ namespace NetSdrClientApp.Tests
         {
             
             var wrapper = new TcpClientWrapper("127.0.0.1", 1234);
-           
+            
             Assert.ThrowsAsync<InvalidOperationException>(async () => 
             {
                 await wrapper.SendMessageAsync("test message");
