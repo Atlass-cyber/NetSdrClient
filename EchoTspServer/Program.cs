@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+// Переконайся, що цей namespace той самий, що і в EchoLogic.cs
 namespace NetSdrClientApp.Server 
 {
     /// <summary>
@@ -16,12 +17,18 @@ namespace NetSdrClientApp.Server
         private readonly int _port;
         private TcpListener _listener;
         private CancellationTokenSource _cancellationTokenSource;
+        
+        // 1. Додано поле для "мозку" (логіки)
+        private readonly EchoLogic _logicHandler; 
     
     
         public EchoServer(int port)
         {
             _port = port;
             _cancellationTokenSource = new CancellationTokenSource();
+            
+            // 2. Ініціалізуємо "мозок" тут
+            _logicHandler = new EchoLogic(); 
         }
     
         public async Task StartAsync()
@@ -49,6 +56,7 @@ namespace NetSdrClientApp.Server
             Console.WriteLine("Server shutdown.");
         }
     
+        // 3. (Найголовніша зміна) - Метод HandleClientAsync тепер ДЕЛЕГУЄ логіку
         private async Task HandleClientAsync(TcpClient client, CancellationToken token)
         {
             using (NetworkStream stream = client.GetStream())
@@ -60,9 +68,12 @@ namespace NetSdrClientApp.Server
     
                     while (!token.IsCancellationRequested && (bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, token)) > 0)
                     {
-                        // Echo back the received message
-                        await stream.WriteAsync(buffer, 0, bytesRead, token);
-                        Console.WriteLine($"Echoed {bytesRead} bytes to the client.");
+                        // 3.1. Передаємо дані "мозку" (логіці) на обробку
+                        byte[] response = _logicHandler.ProcessMessage(buffer, bytesRead);
+                        
+                        // 3.2. Відправляємо клієнту результат, який повернув "мозок"
+                        await stream.WriteAsync(response, 0, response.Length, token);
+                        Console.WriteLine($"Echoed {response.Length} bytes to the client.");
                     }
                 }
                 catch (Exception ex) when (!(ex is OperationCanceledException))
