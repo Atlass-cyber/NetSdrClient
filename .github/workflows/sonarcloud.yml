@@ -41,7 +41,7 @@ permissions:
 jobs:
   sonar-check:
     name: Sonar Check
-    runs-on: windows-latest   # безпечно для будь-яких .NET проектів
+    runs-on: windows-latest    # безпечно для будь-яких .NET проектів
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -56,28 +56,36 @@ jobs:
           dotnet tool install --global dotnet-sonarscanner
           echo "$env:USERPROFILE\.dotnet\tools" >> $env:GITHUB_PATH
           dotnet sonarscanner begin `
-          /k:"Atlass-cyber_NetSdrClient" `
-          /o:"atlass-cyber" `
-          /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-          /d:sonar.cs.opencover.reportsPaths="**/coverage.xml" `
-          /d:sonar.cpd.cs.minimumTokens=40 `
-          /d:sonar.cpd.cs.minimumLines=5 `
-          /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml `
-          /d:sonar.qualitygate.wait=true
+            /k:"Atlass-cyber_NetSdrClient" `
+            /o:"atlass-cyber" `
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
+            /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage.xml" ` # <--- Цей рядок вже правильний, він знайде ОБИДВА файли
+            /d:sonar.cpd.cs.minimumTokens=40 `
+            /d:sonar.cpd.cs.minimumLines=5 `
+            /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml `
+            /d:sonar.qualitygate.wait=true
         shell: pwsh
-      # 2) BUILD & TEST
+        
       - name: Restore
         run: dotnet restore NetSdrClient.sln
       - name: Build
         run: dotnet build NetSdrClient.sln -c Release --no-restore
+        
       - name: Tests with coverage (OpenCover)
         run: |
+          # Запускаємо тести для ПЕРШОГО проекту
           dotnet test NetSdrClientAppTests/NetSdrClientAppTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
             /p:CoverletOutput=TestResults/coverage.xml `
             /p:CoverletOutputFormat=opencover
+            
+          # Запускаємо тести для ДРУГОГО (нового) проекту
+          dotnet test EchoServerTests/EchoServerTests.csproj -c Release --no-build `
+            /p:CollectCoverage=true `
+            /p:CoverletOutput=TestResults/coverage.xml `
+            /p:CoverletOutputFormat=opencover
         shell: pwsh
-      # 3) END: SonarScanner
+
       - name: SonarScanner End
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
         shell: pwsh
