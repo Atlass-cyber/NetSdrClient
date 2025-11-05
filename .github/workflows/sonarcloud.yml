@@ -41,7 +41,7 @@ permissions:
 jobs:
   sonar-check:
     name: Sonar Check
-    runs-on: windows-latest    # безпечно для будь-яких .NET проектів
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -55,8 +55,8 @@ jobs:
         run: |
           dotnet tool install --global dotnet-sonarscanner
           echo "$env:USERPROFILE\.dotnet\tools" >> $env:GITHUB_PATH
-          # --- ЗМІНА ТУТ: Вся команда в одному рядку, щоб уникнути помилок PowerShell ---
-          dotnet sonarscanner begin /k:"Atlass-cyber_NetSdrClient" /o:"atlass-cyber" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/coverage.xml" /d:sonar.cpd.cs.minimumTokens=40 /d:sonar.cpd.cs.minimumLines=5 /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml /d:sonar.qualitygate.wait=true
+          # --- ЗМІНА ТУТ: Ми ЯВНО вказуємо імена ДВОХ звітів ---
+          dotnet sonarscanner begin /k:"Atlass-cyber_NetSdrClient" /o:"atlass-cyber" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="coverage.client.xml,coverage.server.xml" /d:sonar.cpd.cs.minimumTokens=40 /d:sonar.cpd.cs.minimumLines=5 /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml /d:sonar.qualitygate.wait=true
         shell: pwsh
         
       # 2) BUILD & TEST
@@ -65,17 +65,19 @@ jobs:
       - name: Build
         run: dotnet build NetSdrClient.sln -c Release --no-restore
         
-      # --- ЗМІНА ТУТ: Запускаємо обидва тестові проекти ---
+      # --- ЗМІНА ТУТ: Даємо кожному звіту УНІКАЛЬНЕ ім'я в кореневій папці ---
       - name: Tests with coverage (OpenCover)
         run: |
+          # Звіт для КЛІЄНТА
           dotnet test NetSdrClientAppTests/NetSdrClientAppTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
-            /p:CoverletOutput=TestResults/coverage.xml `
+            /p:CoverletOutput=coverage.client.xml `
             /p:CoverletOutputFormat=opencover
             
+          # Звіт для СЕРВЕРА
           dotnet test EchoServerTests/EchoServerTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
-            /p:CoverletOutput=TestResults/coverage.xml `
+            /p:CoverletOutput=coverage.server.xml `
             /p:CoverletOutputFormat=opencover
         shell: pwsh
 
