@@ -50,38 +50,37 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      # 1) BEGIN: SonarScanner for .NET
+
       - name: SonarScanner Begin
         run: |
           dotnet tool install --global dotnet-sonarscanner
           echo "$env:USERPROFILE\.dotnet\tools" >> $env:GITHUB_PATH
-          # --- ЗМІНА ТУТ: Ми ЯВНО вказуємо імена ДВОХ звітів ---
           dotnet sonarscanner begin /k:"Atlass-cyber_NetSdrClient" /o:"atlass-cyber" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="coverage.client.xml,coverage.server.xml" /d:sonar.cpd.cs.minimumTokens=40 /d:sonar.cpd.cs.minimumLines=5 /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml /d:sonar.qualitygate.wait=true
         shell: pwsh
         
-      # 2) BUILD & TEST
+
       - name: Restore
         run: dotnet restore NetSdrClient.sln
       - name: Build
         run: dotnet build NetSdrClient.sln -c Release --no-restore
-        
-      # --- ЗМІНА ТУТ: Даємо кожному звіту УНІКАЛЬНЕ ім'я в кореневій папці ---
-      - name: Tests with coverage (OpenCover)
+
+      - name: Run Client Tests & Coverage
         run: |
-          # Звіт для КЛІЄНТА
           dotnet test NetSdrClientAppTests/NetSdrClientAppTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
             /p:CoverletOutput=coverage.client.xml `
             /p:CoverletOutputFormat=opencover
+        shell: pwsh
             
-          # Звіт для СЕРВЕРА
+      - name: Run Server Tests & Coverage
+        run: |
           dotnet test EchoServerTests/EchoServerTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
             /p:CoverletOutput=coverage.server.xml `
             /p:CoverletOutputFormat=opencover
         shell: pwsh
 
-      # 3) END: SonarScanner
+
       - name: SonarScanner End
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
         shell: pwsh
