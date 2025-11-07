@@ -37,7 +37,6 @@ namespace NetSdrClientApp.Networking
 
             try
             {
-                // Створюємо CTS тільки після успішного з'єднання
                 _tcpClient.Connect(_host, _port);
                 _stream = _tcpClient.GetStream();
                 _cts = new CancellationTokenSource();
@@ -48,7 +47,8 @@ namespace NetSdrClientApp.Networking
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to connect: {ex.Message}");
-                _tcpClient?.Close();
+                // ВИПРАВЛЕНО: Sonar каже, що тут _tcpClient точно не null, тому "?" не потрібен
+                _tcpClient.Close();
                 _tcpClient = null;
             }
         }
@@ -58,7 +58,7 @@ namespace NetSdrClientApp.Networking
             if (Connected)
             {
                 _cts?.Cancel();
-                _cts?.Dispose(); // Виправлення Reliability багу
+                _cts?.Dispose();
                 _stream?.Close();
                 _tcpClient?.Close();
 
