@@ -38,6 +38,7 @@ namespace NetSdrClientApp.Networking
                 }
             }
             catch (OperationCanceledException)
+                Console.WriteLine("Listening task was canceled.");
             {
             }
             catch (Exception ex)
