@@ -48,9 +48,13 @@ namespace NetSdrClientApp.Tests
             await listenerTask;
             wrapper.Disconnect();
 
-            Assert.That(serverError, Is.Null);
-            Assert.That(messageReceivedByServer, Is.EqualTo(testMessage));
-            Assert.That(wrapper.Connected, Is.False);
+            // ВИПРАВЛЕНО: Загорнуто в Assert.Multiple
+            Assert.Multiple(() =>
+            {
+                Assert.That(serverError, Is.Null);
+                Assert.That(messageReceivedByServer, Is.EqualTo(testMessage));
+                Assert.That(wrapper.Connected, Is.False);
+            });
         }
 
         [Test]
@@ -94,7 +98,7 @@ namespace NetSdrClientApp.Tests
             await listenerTask;
             listener.Stop();
 
-            // ВИПРАВЛЕНО: Assert.Multiple для Sonar
+            // ВИПРАВЛЕНО: Загорнуто в Assert.Multiple
             Assert.Multiple(() =>
             {
                 Assert.That(wasConnected, Is.True, "Мав підключитися");
@@ -102,7 +106,6 @@ namespace NetSdrClientApp.Tests
             });
         }
 
-        // НОВИЙ ТЕСТ: для 100% покриття Disconnect
         [Test]
         public void Disconnect_When_Not_Connected_Does_Nothing()
         {
