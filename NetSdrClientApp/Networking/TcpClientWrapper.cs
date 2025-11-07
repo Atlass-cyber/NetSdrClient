@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+using System;
 using System.Linq;
-using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -12,8 +9,8 @@ namespace NetSdrClientApp.Networking
 {
     public class TcpClientWrapper : ITcpClient
     {
-        private string _host;
-        private int _port;
+        private readonly string _host;
+        private readonly int _port;
         private TcpClient? _tcpClient;
         private NetworkStream? _stream;
         private CancellationTokenSource? _cts;
@@ -40,15 +37,19 @@ namespace NetSdrClientApp.Networking
 
             try
             {
-                _cts = new CancellationTokenSource();
+                // Створюємо CTS тільки після успішного з'єднання
                 _tcpClient.Connect(_host, _port);
                 _stream = _tcpClient.GetStream();
+                _cts = new CancellationTokenSource();
+                
                 Console.WriteLine($"Connected to {_host}:{_port}");
                 _ = StartListeningAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to connect: {ex.Message}");
+                _tcpClient?.Close();
+                _tcpClient = null;
             }
         }
 
@@ -57,6 +58,7 @@ namespace NetSdrClientApp.Networking
             if (Connected)
             {
                 _cts?.Cancel();
+                _cts?.Dispose(); // Виправлення Reliability багу
                 _stream?.Close();
                 _tcpClient?.Close();
 
@@ -97,11 +99,9 @@ namespace NetSdrClientApp.Networking
                 try
                 {
                     Console.WriteLine($"Starting listening for incomming messages.");
-
                     while (!_cts.Token.IsCancellationRequested)
                     {
                         byte[] buffer = new byte[8194];
-
                         int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length, _cts.Token);
                         if (bytesRead > 0)
                         {
@@ -109,18 +109,23 @@ namespace NetSdrClientApp.Networking
                         }
                     }
                 }
-                catch (OperationCanceledException ex)
+                catch (OperationCanceledException)
                 {
-                    //empty
+                    Console.WriteLine("Listening task was canceled.");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error in listening loop: {ex.Message}");
+                    Disconnect();
                 }
                 finally
                 {
                     Console.WriteLine("Listener stopped.");
                 }
+            }
+            else if (_cts == null || _cts.IsCancellationRequested)
+            {
+                Console.WriteLine("Listening not started or was already cancelled.");
             }
             else
             {
@@ -128,5 +133,4 @@ namespace NetSdrClientApp.Networking
             }
         }
     }
-
 }
