@@ -83,6 +83,52 @@ namespace NetSdrClientApp.Tests
             // Виправлено: NUnit 4 синтаксис
             Assert.That(wrapper.Connected, Is.False);
         }
+
+        [Test]
+        public void Connect_Should_Handle_Connection_Failure()
+        {
+            // Використовуємо порт, який ніхто не слухає
+            var wrapper = new TcpClientWrapper("127.0.0.1", 65534);
+
+            // Act
+            wrapper.Connect();
+
+            // Assert
+            // Цей тест виконує код у catch { _tcpClient.Close(); _tcpClient = null; }
+            Assert.That(wrapper.Connected, Is.False);
+        }
+
+        // === НОВИЙ ТЕСТ 2: Покриває Disconnect() [7 з 9 рядків] ===
+        [Test]
+        public async Task Disconnect_Should_Close_Connection_And_Dispose_CTS()
+        {
+            // Arrange: Створюємо реальний слухач
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            
+            var listenerTask = Task.Run(async () =>
+            {
+                // Просто приймаємо з'єднання, щоб Connect() пройшов
+                try { await listener.AcceptTcpClientAsync(); } catch { /* Ігноруємо помилки */ }
+            });
+
+            var wrapper = new TcpClientWrapper("127.0.0.1", port);
+            
+            // Act: Підключаємося і ВІДРАЗУ відключаємося
+            wrapper.Connect();
+            var wasConnected = wrapper.Connected;
+            wrapper.Disconnect();
+            
+            await listenerTask;
+            listener.Stop();
+
+            // Assert
+            Assert.That(wasConnected, Is.True, "Мав підключитися");
+            Assert.That(wrapper.Connected, Is.False, "Мав відключитися");
+            // Цей тест виконує 7 рядків у if(Connected) в методі Disconnect()
+        }
+          
     }
 }
 
