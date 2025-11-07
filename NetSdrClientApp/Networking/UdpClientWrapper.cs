@@ -39,7 +39,6 @@ namespace NetSdrClientApp.Networking
             }
             catch (OperationCanceledException)
             {
-                // Listening cancelled
             }
             catch (Exception ex)
             {
@@ -52,6 +51,7 @@ namespace NetSdrClientApp.Networking
             try
             {
                 _cts?.Cancel();
+                _cts?.Dispose(); 
                 _udpClient?.Close();
                 Console.WriteLine("Stopped listening for UDP messages.");
             }
@@ -66,7 +66,6 @@ namespace NetSdrClientApp.Networking
             StopListening();
         }
 
-        // Sonar fix: Equals узгоджене з GetHashCode
         public override bool Equals(object? obj)
         {
             if (obj is not UdpClientWrapper other)
@@ -78,12 +77,7 @@ namespace NetSdrClientApp.Networking
 
         public override int GetHashCode()
         {
-            var payload = $"{nameof(UdpClientWrapper)}|{_localEndPoint.Address}|{_localEndPoint.Port}";
-
-            using var md5 = MD5.Create();
-            var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(payload));
-
-            return BitConverter.ToInt32(hash, 0);
+            return HashCode.Combine(nameof(UdpClientWrapper), _localEndPoint.Address, _localEndPoint.Port);
         }
 
         public void Dispose()
