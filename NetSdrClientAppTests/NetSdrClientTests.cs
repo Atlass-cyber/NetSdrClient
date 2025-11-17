@@ -13,7 +13,7 @@ public class NetSdrClientTests
     public NetSdrClientTests() { }
 
     [SetUp]
-    public void Setup()
+    public Task Setup()
     {
         _tcpMock = new Mock<ITcpClient>();
         _tcpMock.Setup(tcp => tcp.Connect()).Callback(() =>
@@ -37,7 +37,7 @@ public class NetSdrClientTests
     }
 
     [Test]
-    public async void ConnectAsyncTest()
+    public async Task ConnectAsyncTest()
     {
         //act
         await _client.ConnectAsync();
@@ -48,7 +48,7 @@ public class NetSdrClientTests
     }
 
     [Test]
-    public async void DisconnectWithNoConnectionTest()
+    public async Task DisconnectWithNoConnectionTest()
     {
         //act
         _client.Disconect();
@@ -59,7 +59,7 @@ public class NetSdrClientTests
     }
 
     [Test]
-    public async void DisconnectTest()
+    public async Task DisconnectTest()
     {
         //Arrange 
         await ConnectAsyncTest();
@@ -73,7 +73,7 @@ public class NetSdrClientTests
     }
 
     [Test]
-    public async void StartIQNoConnectionTest()
+    public async Task StartIQNoConnectionTest()
     {
 
         //act
@@ -86,7 +86,7 @@ public class NetSdrClientTests
     }
 
     [Test]
-    public async void StartIQTest()
+    public async Task StartIQTest()
     {
         //Arrange 
         await ConnectAsyncTest();
@@ -101,7 +101,7 @@ public class NetSdrClientTests
     }
 
     [Test]
-    public async void StopIQTest()
+    public async Task StopIQTest()
     {
         //Arrange 
         await ConnectAsyncTest();
@@ -119,7 +119,7 @@ public class NetSdrClientTests
 
     // --- ТЕСТ №1 (адаптований під NUnit): Перевіряємо, що Disconnect викликається навіть якщо не було підключення ---
     [Test]
-    public void Disconnect_ShouldAlwaysCallDisconnectOnTcpClient()
+    public Task Disconnect_ShouldAlwaysCallDisconnectOnTcpClient()
     {
         // Arrange - нічого не потрібно, все є в Setup
 
@@ -133,7 +133,7 @@ public class NetSdrClientTests
 
     // --- ТЕСТ №2 (адаптований під NUnit): Перевіряємо, що StopIQAsync не працює, якщо немає підключення ---
     [Test]
-    public async void StopIQAsync_ShouldDoNothing_WhenNotConnected()
+    public async Task StopIQAsync_ShouldDoNothing_WhenNotConnected()
     {
         // Arrange
         // Кажемо, що клієнт НЕ підключений
@@ -150,7 +150,7 @@ public class NetSdrClientTests
 
     // --- ТЕСТ №3 (адаптований під NUnit): Перевіряємо, що ChangeFrequencyAsync відправляє повідомлення ---
     [Test]
-    public async void ChangeFrequencyAsync_ShouldSendMessage_WhenCalled()
+    public async Task ChangeFrequencyAsync_ShouldSendMessage_WhenCalled()
     {
         // Arrange
         // Кажемо, що клієнт підключений, щоб метод відпрацював
@@ -165,7 +165,7 @@ public class NetSdrClientTests
 
     // --- ТЕСТ №4 (адаптований під NUnit): Перевіряємо, що ConnectAsync нічого не робить, якщо вже є підключення ---
     [Test]
-    public async void ConnectAsync_ShouldDoNothing_WhenAlreadyConnected()
+    public async Task ConnectAsync_ShouldDoNothing_WhenAlreadyConnected()
     {
         // Arrange
         // Кажемо, що клієнт ВЖЕ підключений
