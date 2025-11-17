@@ -69,7 +69,7 @@ namespace NetSdrClientApp.Server
                     while (!token.IsCancellationRequested && (bytesRead = await stream.ReadAsync(buffer, token)) > 0)
                     {
                         // 3.1. Передаємо дані "мозку" (логіці) на обробку
-                        byte[] response = _logicHandler.ProcessMessage(buffer, bytesRead);
+                        byte[] response = EchoLogic.ProcessMessage(buffer, bytesRead);
                         
                         // 3.2. Відправляємо клієнту результат, який повернув "мозок"
                         await stream.WriteAsync(response, token);
