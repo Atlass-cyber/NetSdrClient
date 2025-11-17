@@ -1,7 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Security.Cryptography;
+using System.Security.Cryptography; // Це було в тебе, але для HashCode не потрібно
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,7 +39,8 @@ namespace NetSdrClientApp.Networking
             }
             catch (OperationCanceledException)
             {
-                // Listening cancelled
+                // ВИПРАВЛЕНО: Додаємо лог, щоб блок не був порожнім
+                Console.WriteLine("Listening task was canceled.");
             }
             catch (Exception ex)
             {
@@ -52,6 +53,7 @@ namespace NetSdrClientApp.Networking
             try
             {
                 _cts?.Cancel();
+                _cts?.Dispose(); // <-- ВИПРАВЛЕННЯ (Reliability): Очищуємо CTS
                 _udpClient?.Close();
                 Console.WriteLine("Stopped listening for UDP messages.");
             }
@@ -78,12 +80,9 @@ namespace NetSdrClientApp.Networking
 
         public override int GetHashCode()
         {
-            var payload = $"{nameof(UdpClientWrapper)}|{_localEndPoint.Address}|{_localEndPoint.Port}";
-
-            using var md5 = MD5.Create();
-            var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(payload));
-
-            return BitConverter.ToInt32(hash, 0);
+            // === ВИПРАВЛЕННЯ (MD5 Hotspot) ===
+            // Замінюємо повільний MD5 на швидкий і правильний HashCode.Combine
+            return HashCode.Combine(nameof(UdpClientWrapper), _localEndPoint.Address, _localEndPoint.Port);
         }
 
         public void Dispose()
