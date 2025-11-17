@@ -75,7 +75,7 @@ namespace NetSdrClientApp.Networking
 
         public async Task SendMessageAsync(byte[] data)
         {
-            if (Connected && _stream != null && _stream.CanWrite)
+            if (Connected && _stream != null && _stream.CanWrite && _cts != null)
             {
                 Console.WriteLine($"Message sent: " + data.Select(b => Convert.ToString(b, toBase: 16)).Aggregate((l, r) => $"{l} {r}"));
                 await _stream.WriteAsync(data, _cts.Token);
