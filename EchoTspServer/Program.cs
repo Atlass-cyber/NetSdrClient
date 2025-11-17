@@ -98,6 +98,7 @@ namespace NetSdrClientApp.Server
                 Console.WriteLine("Press 'q' to quit...");
                 while (Console.ReadKey(intercept: true).Key != ConsoleKey.Q)
                 {
+                    // Wait for 'q' to be pressed
                 }
     
                 sender.StopSending();
