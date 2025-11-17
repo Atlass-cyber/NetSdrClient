@@ -34,14 +34,14 @@ namespace NetSdrClientAppTests
 
             //Assert
             Assert.Multiple(() =>
-            {
-                Assert.That(headerBytes, Has.Count.EqualTo(2));
-                Assert.That(msg.Length, Is.EqualTo(actualLength));
-                Assert.That(type, Is.EqualTo(actualType));
-                Assert.That(actualCode, Is.EqualTo((short)code));
-                
-                Assert.That(parametersBytes, Has.Count.EqualTo(parametersLength));
-            });
+            {
+                Assert.That(headerBytes.Count(), Is.EqualTo(2));
+                Assert.That(msg.Length, Is.EqualTo(actualLength));
+                Assert.That(type, Is.EqualTo(actualType));
+                Assert.That(actualCode, Is.EqualTo((short)code));
+                
+                Assert.That(parametersBytes.Count(), Is.EqualTo(parametersLength));
+            });
         }
 
         [Test]
@@ -64,13 +64,13 @@ namespace NetSdrClientAppTests
             //Assert
             Assert.Multiple(() =>
             {
-                Assert.That(headerBytes, Has.Count.EqualTo(2));
+                Assert.That(headerBytes.Count(), Is.EqualTo(2));
                 Assert.That(msg.Length, Is.EqualTo(actualLength));
                 Assert.That(type, Is.EqualTo(actualType));
-                
-                Assert.That(parametersBytes, Has.Count.EqualTo(parametersLength));
+                
+                Assert.That(parametersBytes.Count(), Is.EqualTo(parametersLength));
             });
 
-    }
+    }
     }
 }
