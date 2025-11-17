@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.PortableExecutable;
@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace NetSdrClientApp.Messages
 {
-    //TODO: analyze possible use of [StructLayout] for better performance and readability 
     public static class NetSdrMessageHelper
     {
         private const short _maxMessageLength = 8191;
@@ -108,15 +107,24 @@ namespace NetSdrClientApp.Messages
 
         public static IEnumerable<int> GetSamples(ushort sampleSize, byte[] body)
         {
-            sampleSize /= 8; //to bytes
-            if (sampleSize  > 4)
+            if (body == null)
             {
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentNullException(nameof(body));
             }
 
-            var bodyEnumerable = body as IEnumerable<byte>;
+            ushort sampleSizeInBytes = (ushort)(sampleSize / 8); //to bytes
+            if (sampleSizeInBytes > 4 || sampleSizeInBytes == 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sampleSize), "Sample size must be 8, 16, 24, or 32 bits.");
+            }
+
+            return GetSamplesIterator(sampleSizeInBytes, body);
+        }
+
+        private static IEnumerable<int> GetSamplesIterator(ushort sampleSize, IEnumerable<byte> bodyEnumerable)
+        {
             var prefixBytes = Enumerable.Range(0, 4 - sampleSize)
-                                      .Select(b => (byte)0);
+                                           .Select(b => (byte)0);
 
             while (bodyEnumerable.Count() >= sampleSize)
             {
@@ -132,7 +140,6 @@ namespace NetSdrClientApp.Messages
         {
             int lengthWithHeader = msgLength + 2;
 
-            //Data Items edge case
             if (type >= MsgTypes.DataItem0 && lengthWithHeader == _maxDataItemMessageLength)
             {
                 lengthWithHeader = 0;
