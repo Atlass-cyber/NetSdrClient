@@ -96,7 +96,7 @@ namespace NetSdrClientApp.Server
             Console.WriteLine("Server stopped.");
         }
     
-        ublic static void Main(string[] args)
+        public static void Main(string[] args)
         {
             EchoServer server = new EchoServer(5000);
     
