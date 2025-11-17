@@ -71,6 +71,6 @@ namespace NetSdrClientAppTests
                 Assert.That(parametersBytes, Has.Count.EqualTo(parametersLength));
             });
 
-   
+    }
     }
 }
