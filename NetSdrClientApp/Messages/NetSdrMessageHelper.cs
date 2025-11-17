@@ -107,11 +107,8 @@ namespace NetSdrClientApp.Messages
 
         public static IEnumerable<int> GetSamples(ushort sampleSize, byte[] body)
         {
-            if (body == null)
-            {
-                throw new ArgumentNullException(nameof(body));
-            }
-
+            ArgumentNullException.ThrowIfNull(body);
+            
             ushort sampleSizeInBytes = (ushort)(sampleSize / 8); //to bytes
             if (sampleSizeInBytes > 4 || sampleSizeInBytes == 0)
             {
