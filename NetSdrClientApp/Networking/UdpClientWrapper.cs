@@ -13,6 +13,7 @@ namespace NetSdrClientApp.Networking
         private readonly IPEndPoint _localEndPoint;
         private CancellationTokenSource? _cts;
         private UdpClient? _udpClient;
+        private bool _disposedValue = false;
 
         public event EventHandler<byte[]>? MessageReceived;
 
@@ -85,12 +86,28 @@ namespace NetSdrClientApp.Networking
             return HashCode.Combine(nameof(UdpClientWrapper), _localEndPoint.Address, _localEndPoint.Port);
         }
 
-        public void Dispose()
+        protected virtual void Dispose(bool disposing)
         {
-            _cts?.Cancel();
-            _cts?.Dispose();
-            _udpClient?.Close();
-            _udpClient?.Dispose();
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    _cts?.Cancel();
+                    _cts?.Dispose();
+                    _udpClient?.Close();
+                    _udpClient?.Dispose();
+                }
+
+                _cts = null;
+                _udpClient = null;
+                _disposedValue = true;
         }
+}
+
+public void Dispose()
+{
+    Dispose(disposing: true);
+    GC.SuppressFinalize(this); // <-- Саме цей рядок вимагав Sonar
+}
     }
 }

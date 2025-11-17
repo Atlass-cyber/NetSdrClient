@@ -26,7 +26,7 @@ namespace NetSdrClientApp.Tests
                     using var client = await listener.AcceptTcpClientAsync();
                     using var stream = client.GetStream();
                     var buffer = new byte[1024];
-                    var bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                    var bytesRead = await stream.ReadAsync(buffer);
                     messageReceivedByServer = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                 }
                 catch (Exception ex)
