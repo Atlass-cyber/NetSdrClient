@@ -15,8 +15,8 @@ namespace NetSdrClientApp.Server
     public class EchoServer
     {
         private readonly int _port;
-        private TcpListener _listener;
-        private CancellationTokenSource _cancellationTokenSource;
+        private TcpListener? _listener;
+        private readonly CancellationTokenSource _cancellationTokenSource;
         
         // 1. Додано поле для "мозку" (логіки)
         private readonly EchoLogic _logicHandler; 
@@ -66,13 +66,13 @@ namespace NetSdrClientApp.Server
                     byte[] buffer = new byte[8192];
                     int bytesRead;
     
-                    while (!token.IsCancellationRequested && (bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, token)) > 0)
+                    while (!token.IsCancellationRequested && (bytesRead = await stream.ReadAsync(buffer, token)) > 0)
                     {
                         // 3.1. Передаємо дані "мозку" (логіці) на обробку
                         byte[] response = _logicHandler.ProcessMessage(buffer, bytesRead);
                         
                         // 3.2. Відправляємо клієнту результат, який повернув "мозок"
-                        await stream.WriteAsync(response, 0, response.Length, token);
+                        await stream.WriteAsync(response, token);
                         Console.WriteLine($"Echoed {response.Length} bytes to the client.");
                     }
                 }
@@ -96,7 +96,7 @@ namespace NetSdrClientApp.Server
             Console.WriteLine("Server stopped.");
         }
     
-        public static async Task Main(string[] args)
+        ublic static void Main(string[] args)
         {
             EchoServer server = new EchoServer(5000);
     
@@ -130,7 +130,7 @@ namespace NetSdrClientApp.Server
         private readonly string _host;
         private readonly int _port;
         private readonly UdpClient _udpClient;
-        private Timer _timer;
+        private Timer? _timer;
     
         public UdpTimedSender(string host, int port)
         {
@@ -149,7 +149,7 @@ namespace NetSdrClientApp.Server
     
         ushort i = 0;
     
-        private void SendMessageCallback(object state)
+        private void SendMessageCallback(object? state)
         {
             try
             {
@@ -183,6 +183,7 @@ namespace NetSdrClientApp.Server
         {
             StopSending();
             _udpClient.Dispose();
+            GC.SuppressFinalize(this); 
         }
     }
 }
