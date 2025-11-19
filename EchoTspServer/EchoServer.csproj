@@ -7,4 +7,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\NetSdrClientApp\NetSdrClientApp.csproj" />
+  </ItemGroup>
+
+
 </Project>
