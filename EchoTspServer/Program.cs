@@ -13,18 +13,19 @@ using AppITimer = NetSdrClientApp.Utils.ITimer;
 
 namespace NetSdrClientApp.Server 
 {
-    public class EchoServer
+    // ИСПРАВЛЕНО: Добавлен IDisposable для очистки CancellationTokenSource (S2930)
+    public class EchoServer : IDisposable
     {
         private readonly int _port;
         private ITcpListener? _listener; 
         private readonly CancellationTokenSource _cancellationTokenSource; 
 
-        private readonly Func<IPAddress, int, ITcpListener> _listenerFactory;
+        private readonly Func<IPAddress, int, ITcpListener> _listenerFactory;
         
         public EchoServer(int port, Func<IPAddress, int, ITcpListener> listenerFactory)
         {
             _port = port;
-            _listenerFactory = listenerFactory;
+            _listenerFactory = listenerFactory;
             _cancellationTokenSource = new CancellationTokenSource();
         }
     
@@ -38,9 +39,9 @@ namespace NetSdrClientApp.Server
             {
                 try
                 {
-                    // ДОБАВЛЕНО: Проверка перед Accept
-                    if (_cancellationTokenSource.IsCancellationRequested) break; 
-                    
+                    // ДОБАВЛЕНО: Проверка перед Accept
+                    if (_cancellationTokenSource.IsCancellationRequested) break; 
+                    
                     ITcpConnection client = await _listener.AcceptTcpClientAsync(); 
                     Console.WriteLine("Client connected.");
     
@@ -51,7 +52,6 @@ namespace NetSdrClientApp.Server
                     break;
                 }
             }
-    
             Console.WriteLine("Server shutdown.");
         }
     
@@ -83,46 +83,55 @@ namespace NetSdrClientApp.Server
             }
         }
     
-        // ИСПРАВЛЕНО: УБРАН CancellationTokenSource.Dispose()
         public void Stop()
         {
             _cancellationTokenSource.Cancel();
             _listener?.Stop(); 
             Console.WriteLine("Server stopped.");
         }
+
+        // ИСПРАВЛЕНО: Добавлен Dispose() для очистки CancellationTokenSource
+        public void Dispose()
+        {
+            _cancellationTokenSource.Dispose();
+            GC.SuppressFinalize(this); 
+        }
     
         public static void Main(string[] args) 
         {
-            Func<IPAddress, int, ITcpListener> listenerFactory = 
-                (addr, port) => new NetSdrClientApp.Networking.TcpListenerWrapper(addr, port);
-            
-            EchoServer server = new EchoServer(5000, listenerFactory);
-    
-            _ = Task.Run(() => server.StartAsync());
-    
-            string host = "127.0.0.1"; 
-            int port = 60000;         
-            int intervalMilliseconds = 5000; 
-    
-            // --- UdpTimedSender ---
-            using (var udpSender = new UdpSenderWrapper())
-            using (AppITimer systemTimer = new SystemTimerWrapper())
-            {
-                using (var sender = new UdpTimedSender(host, port, udpSender, systemTimer))
+            Func<IPAddress, int, ITcpListener> listenerFactory = 
+                (addr, port) => new NetSdrClientApp.Networking.TcpListenerWrapper(addr, port);
+            
+            // ИСПРАВЛЕНО: Теперь EchoServer используется внутри using
+            using (EchoServer server = new EchoServer(5000, listenerFactory))
+            {
+                _ = Task.Run(() => server.StartAsync());
+            
+                string host = "127.0.0.1"; 
+                int port = 60000;         
+                int intervalMilliseconds = 5000; 
+            
+                // --- UdpTimedSender ---
+                using (var udpSender = new UdpSenderWrapper())
+                using (AppITimer systemTimer = new SystemTimerWrapper())
                 {
-                    Console.WriteLine("Press any key to stop sending...");
-                    sender.StartSending(intervalMilliseconds);
-    
-                    Console.WriteLine("Press 'q' to quit...");
-                    while (Console.ReadKey(intercept: true).Key != ConsoleKey.Q)
+                    using (var sender = new UdpTimedSender(host, port, udpSender, systemTimer))
                     {
-                    }
+                        Console.WriteLine("Press any key to stop sending...");
+                        sender.StartSending(intervalMilliseconds);
     
-                    sender.StopSending();
-                    server.Stop();
-                    Console.WriteLine("Sender stopped.");
+                        Console.WriteLine("Press 'q' to quit...");
+                        while (Console.ReadKey(intercept: true).Key != ConsoleKey.Q)
+                        {
+                            // ИСПРАВЛЕНО: Убран пустой блок S108
+                        }
+    
+                        sender.StopSending();
+                        server.Stop();
+                        Console.WriteLine("Sender stopped.");
+                    }
                 }
-            }
+            }
         }
     }
 
@@ -133,6 +142,7 @@ namespace NetSdrClientApp.Server
         
         private readonly IUdpSender _udpClient;
         private readonly AppITimer _timer; 
+        private bool disposedValue; // ИСПРАВЛЕНО: Добавлен флаг S3881
     
         public UdpTimedSender(string host, int port, IUdpSender udpClient, AppITimer timer)
         {
@@ -183,10 +193,25 @@ namespace NetSdrClientApp.Server
             _timer.Dispose();
         }
     
+        // ИСПРАВЛЕНО: Полный паттерн Dispose (S3881)
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // Освобождение управляемых ресурсов
+                    _timer.Dispose();
+                    _udpClient.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
+
         public void Dispose()
         {
-            StopSending();
-            _udpClient.Dispose();
+            // Вызываем новый Dispose
+            Dispose(disposing: true);
             GC.SuppressFinalize(this); 
         }
     }
