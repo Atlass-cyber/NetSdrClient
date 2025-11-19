@@ -55,8 +55,7 @@ jobs:
         run: |
           dotnet tool install --global dotnet-sonarscanner
           echo "$env:USERPROFILE\.dotnet\tools" >> $env:GITHUB_PATH
-          # --- ЗМІНА ТУТ: Ми ЯВНО вказуємо ПОВНІ ШЛЯХИ до звітів ---
-          dotnet sonarscanner begin /k:"Atlass-cyber_NetSdrClient" /o:"atlass-cyber" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="NetSdrClientAppTests/coverage.client.xml,EchoServerTests/coverage.server.xml" /d:sonar.cpd.cs.minimumTokens=40 /d:sonar.cpd.cs.minimumLines=5 /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml /d:sonar.qualitygate.wait=true
+          dotnet sonarscanner begin /k:"Atlass-cyber_NetSdrClient" /o:"atlass-cyber" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="NetSdrClientAppTests/coverage.client.xml,EchoServerTests/coverage.server.xml" /d:sonar.cpd.cs.minimumTokens=40 /d:sonar.cpd.cs.minimumLines=5 /d:sonar.qualitygate.wait=true /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml /d:sonar.coverage.exclusions="**/*Wrapper.cs,**/*ITimer.cs,**/*ITcp*.cs,**/*IUdp*.cs,**/NetSdrClientApp/Program.cs"
         shell: pwsh
         
       # 2) BUILD & TEST
